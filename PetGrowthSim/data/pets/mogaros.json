@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "1.1",
+  "petId": "mogaros",
+  "name": "모가로스",
+
+  "attribute": {
+    "fire": 8,
+    "water": 2
+  },
+
+  "baseline": {
+    "stats": {
+      "atk": 12,
+      "def": 8,
+      "spd": 7,
+      "hp": 52
+    },
+    "growthRate": 5.0,
+    "piseong": 9.6
+  },
+
+  "initialStatGeneration": {
+    "adjustment": {
+      "precision": {
+        "atk_def_spd_step": 0.1,
+        "hp_step": 1
+      },
+      "range": {
+        "atk": { "min": -1.0, "max": 2.0 },
+        "def": { "min": -1.0, "max": 1.0 },
+        "spd": { "min": -1.0, "max": 1.0 },
+        "hp": { "min": -5, "max": 4 }
+      },
+      "correlation": {
+        "mode": "ATTACK_GATING",
+        "attackGate": {
+            "tiers": [
+            {
+                "atkAdjMinInclusive": -99,
+                "atkAdjMaxExclusive": 0.6,
+                "otherAdjMax": { "def": 0.3, "spd": 0.3 }
+            },
+            {
+                "atkAdjMinInclusive": 0.6,
+                "atkAdjMaxExclusive": 1.2,
+                "otherAdjMax": { "def": 0.6, "spd": 0.6 }
+            },
+            {
+                "atkAdjMinInclusive": 1.2,
+                "atkAdjMaxExclusive": 99,
+                "otherAdjMax": { "def": 1.0, "spd": 1.0 }
+            }
+            ],
+            "note": "atkAdj가 낮으면 def/spd 보정치 상한을 낮춰서 '공이 높을 때만 전체 고성장'이 열리도록 함"
+        }
+      },
+      "globalCap": {
+        "atk_def_spd_maxAbs": 2.0,
+        "atk_def_spd_sumMaxAbs": 2.0
+      }
+    },
+
+    "rounding": {
+      "atk_def_spd_display": "ROUND_HALF_UP",
+      "hp_display": "INTEGER"
+    },
+
+    "clampAfterAdjustment": {
+      "atk": { "min": 11, "max": 14 },
+      "def": { "min": 7, "max": 9 },
+      "spd": { "min": 6, "max": 8 },
+      "hp": { "min": 47, "max": 56 }
+    }
+  },
+
+  "growthProfile": {
+    "normal": {
+      "growthRate": 5.0,
+      "piseong": 9.6,
+      "meanIncrements": {
+        "atk": 2.1,
+        "def": 1.65,
+        "spd": 1.25
+      }
+    },
+    "max": {
+      "growthRate": 5.3,
+      "piseong": 9.9,
+      "meanIncrements": {
+        "atk": 2.2,
+        "def": 1.8,
+        "spd": 1.3
+      }
+    },
+
+    "mapping": {
+      "qualitySource": "sumAdj(atkAdj+defAdj+spdAdj)",
+      "sumAdjForMax": 1.8,
+      "qClamp": { "min": 0.0, "max": 1.0 },
+
+      "interpolation": {
+        "growthRate": "lerp(normal.growthRate, max.growthRate, q)",
+        "piseong": "lerp(normal.piseong, max.piseong, q)",
+        "meanIncrements": "lerp(normal.meanIncrements, max.meanIncrements, q)"
+      },
+
+      "perStatRedistribution": {
+        "enabled": true,
+        "note": "총합(sumAdj)은 유지하면서, 개별 보정치 편차(dev)를 각 스탯 meanIncrements에 미세 반영",
+        "k": 0.05,
+        "devFormula": "devStat = statAdj - (sumAdj/3)",
+        "apply": {
+          "atk": "atkMean += k * devAtk",
+          "def": "defMean += k * devDef",
+          "spd": "spdMean += k * devSpd"
+        }
+      },
+
+      "hpMean": {
+        "enabled": true,
+        "note": "피성(piseong)을 hpMean의 기반으로 보고, hpAdj를 미세 반영(원하면 k를 0으로)",
+        "base": "piseongInterpolated",
+        "hpAdjK": 0.12,
+        "apply": "hpMean = base + hpAdj * hpAdjK",
+        "clamp": { "min": 8.0, "max": 10.05 }
+      }
+    }
+  },
+
+  "growthRules": {
+    "levelUpIncrements": {
+      "atk": { "disallow": [0], "min": 0, "max": 3 },
+      "def": { "disallow": [0], "min": 0, "max": 3 },
+      "spd": { "disallow": [3], "min": 0, "max": 3 },
+      "hp": { "min": 8, "max": 11 }
+    }
+  }
+}

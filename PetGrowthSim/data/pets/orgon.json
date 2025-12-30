@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "1.1",
+  "petId": "orgon",
+  "name": "오르곤",
+
+  "attribute": {
+    "water": 8,
+    "fire": 2
+  },
+
+  "baseline": {
+    "stats": {
+      "atk": 9,
+      "def": 8,
+      "spd": 6,
+      "hp": 55
+    },
+    "growthRate": 4.6,
+    "piseong": 10.00
+  },
+
+  "initialStatGeneration": {
+    "adjustment": {
+      "precision": {
+        "atk_def_spd_step": 0.1,
+        "hp_step": 1
+      },
+
+      "range": {
+        "atk": { "min": -1.0, "max":  2.0 },
+        "def": { "min": -2.0, "max":  1.0 },
+        "spd": { "min": -1.0, "max":  1.0 },
+        "hp":  { "min": -3,   "max":  3 }
+      },
+
+      "correlation": {
+	    "mode": "NONE",
+	    "note": "오르곤은 공팻이 아니라 ATTACK_GATING 미적용"
+	  },
+
+      "globalCap": {
+        "atk_def_spd_maxAbs": 2.0,
+        "atk_def_spd_sumMaxAbs": 2.0
+      }
+    },
+
+    "rounding": {
+      "atk_def_spd_display": "ROUND_HALF_UP",
+      "hp_display": "INTEGER"
+    },
+
+    "clampAfterAdjustment": {
+      "atk": { "min": 8, "max": 11 },
+      "def": { "min": 6, "max": 9 },
+      "spd": { "min": 5, "max": 7 },
+      "hp": { "min": 52, "max": 58 }
+    }
+  },
+
+  "growthProfile": {
+    "normal": {
+      "growthRate": 4.6,
+      "piseong": 10.0,
+      "meanIncrements": {
+        "atk": 1.89,
+        "def": 1.56,
+        "spd": 1.15
+      }
+    },
+
+    "max": {
+      "growthRate": 4.85,
+      "piseong": 10.25,
+      "meanIncrements": {
+        "atk": 1.97,
+        "def": 1.64,
+        "spd": 1.22
+      }
+    },
+
+    "mapping": {
+      "qualitySource": "sumAdj(atkAdj+defAdj+spdAdj)",
+      "sumAdjForMax": 1.8,
+      "qClamp": { "min": 0.0, "max": 1.0 },
+
+      "interpolation": {
+        "growthRate": "lerp(normal.growthRate, max.growthRate, q)",
+        "piseong": "lerp(normal.piseong, max.piseong, q)",
+        "meanIncrements": "lerp(normal.meanIncrements, max.meanIncrements, q)"
+      },
+
+      "perStatRedistribution": {
+        "enabled": true,
+        "note": "총합(sumAdj)은 유지하면서, 개별 보정치 편차(dev)를 각 스탯 meanIncrements에 미세 반영",
+        "k": 0.05,
+        "devFormula": "devStat = statAdj - (sumAdj/3)",
+        "apply": {
+          "atk": "atkMean += k * devAtk",
+          "def": "defMean += k * devDef",
+          "spd": "spdMean += k * devSpd"
+        }
+      },
+
+      "hpMean": {
+        "enabled": true,
+        "note": "피성(piseong)을 hpMean의 기반으로 보고, hpAdj를 미세 반영(원하면 k를 0으로)",
+        "base": "piseongInterpolated",
+        "hpAdjK": 0.12,
+        "apply": "hpMean = base + hpAdj * hpAdjK",
+        "clamp": { "min": 8.0, "max": 10.25 }
+      }
+    }
+  },
+
+  "growthRules": {
+    "levelUpIncrements": {
+      "atk": { "disallow": [0], "min": 0, "max": 3 },
+      "def": { "disallow": [0], "min": 0, "max": 3 },
+      "spd": { "disallow": [3], "min": 0, "max": 3 },
+      "hp": { "min": 8, "max": 11 }
+    }
+  }
+}

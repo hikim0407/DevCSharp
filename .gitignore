@@ -1,0 +1,28 @@
+# ===== .NET 빌드 산출물 =====
+**/bin/
+**/obj/
+
+# ===== Visual Studio / Rider =====
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ===== VS Code (원하면 settings만 남기기) =====
+.vscode/
+# !.vscode/settings.json
+# !.vscode/launch.json
+# !.vscode/tasks.json
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== 로그/임시파일 =====
+*.log
+
+# ===== publish 산출물(사용한다면) =====
+**/publish/
+**/Publish/
