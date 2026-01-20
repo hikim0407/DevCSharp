@@ -122,68 +122,112 @@ internal class Program
         var gen = new InitialStatsGenerator();
         var engine = new GrowthProfileEngine();
 
-        var pet = gen.CreateIndividual(cfg, rng);
-        var derived = engine.Build(cfg, pet);
-
-        Console.WriteLine(pet);
-        Console.WriteLine();
-        Console.WriteLine("1업씩 진행: 엔터=다음 / q=종료");
-        Console.WriteLine("현재레벨\t공격력\t방어력\t순발력\t체력\t공성\t방성\t순성\t총성\t체성\t(증가치)");
-        Console.WriteLine("--------------------------------------------------------------------------------------------------");
-
-        // 규칙 준비
+        // 규칙 준비(한 번만)
         var rule = cfg.GrowthRules.LevelUpIncrements;
         var atkAllowed = DiscreteMeanSampler.BuildAllowedIntRange(rule.Atk.Min, rule.Atk.Max, rule.Atk.Disallow);
         var defAllowed = DiscreteMeanSampler.BuildAllowedIntRange(rule.Def.Min, rule.Def.Max, rule.Def.Disallow);
         var spdAllowed = DiscreteMeanSampler.BuildAllowedIntRange(rule.Spd.Min, rule.Spd.Max, rule.Spd.Disallow);
         var hpAllowed  = DiscreteMeanSampler.BuildAllowedIntRange(rule.Hp.Min,  rule.Hp.Max,  null);
 
-        // 초기치 기준
-        int baseAtk = pet.Atk;
-        int baseDef = pet.Def;
-        int baseSpd = pet.Spd;
-        int baseHp  = pet.Hp;
+        // 현재 개체/상태 (리롤로 갱신)
+        PetIndividual pet = null!;
+        GrowthProfileEngine.DerivedGrowth derived = null!;
 
-        int curAtk = baseAtk;
-        int curDef = baseDef;
-        int curSpd = baseSpd;
-        int curHp  = baseHp;
-
+        int baseAtk = 0, baseDef = 0, baseSpd = 0, baseHp = 0;
+        int curAtk = 0, curDef = 0, curSpd = 0, curHp = 0;
         int levelUpsDone = 0;
+
+        void Reroll()
+        {
+            pet = gen.CreateIndividual(cfg, rng);
+            derived = engine.Build(cfg, pet);
+
+            baseAtk = pet.Atk;
+            baseDef = pet.Def;
+            baseSpd = pet.Spd;
+            baseHp  = pet.Hp;
+
+            curAtk = baseAtk;
+            curDef = baseDef;
+            curSpd = baseSpd;
+            curHp  = baseHp;
+
+            levelUpsDone = 0;
+
+            Console.WriteLine();
+            Console.WriteLine("=== 초기치 리롤 완료 ===");
+            Console.WriteLine(pet);
+            Console.WriteLine();
+            Console.WriteLine("1업씩 진행: 엔터=1업 / 숫자=폭업 / r=초기치 리롤 / q=종료");
+            Console.WriteLine("현재레벨\t공격력\t방어력\t순발력\t체력\t공성\t방성\t순성\t총성\t체성\t(증가치)");
+            Console.WriteLine("--------------------------------------------------------------------------------------------------");
+        }
+
+        // 첫 생성
+        Reroll();
 
         while (true)
         {
             Console.Write("> ");
             var input = Console.ReadLine();
-            if (string.Equals(input?.Trim(), "q", StringComparison.OrdinalIgnoreCase))
+            if (input == null) continue;
+
+            var trimmed = input.Trim();
+
+            if (string.Equals(trimmed, "q", StringComparison.OrdinalIgnoreCase))
                 break;
 
-            // 한 번 레벨업 (샘플링은 derived 평균 기반)
-            int dAtk = DiscreteMeanSampler.SampleFromMean(rng, atkAllowed, derived.AtkMean);
-            int dDef = DiscreteMeanSampler.SampleFromMean(rng, defAllowed, derived.DefMean);
-            int dSpd = DiscreteMeanSampler.SampleFromMean(rng, spdAllowed, derived.SpdMean);
-            int dHp  = DiscreteMeanSampler.SampleFromMean(rng, hpAllowed,  derived.HpMean);
+            if (string.Equals(trimmed, "r", StringComparison.OrdinalIgnoreCase))
+            {
+                Reroll();
+                continue;
+            }
 
-            curAtk += dAtk;
-            curDef += dDef;
-            curSpd += dSpd;
-            curHp  += dHp;
+            int burst;
+            if (trimmed.Length == 0)
+            {
+                burst = 1; // Enter
+            }
+            else if (!int.TryParse(trimmed, out burst) || burst <= 0)
+            {
+                Console.WriteLine("입력 예: (엔터)=1업, 10=10업, r=리롤, q=종료");
+                continue;
+            }
 
-            levelUpsDone++;
-            int currentLevel = 1 + levelUpsDone;
+            if (burst > 5000)
+            {
+                Console.WriteLine("폭업 값이 너무 큽니다. (최대 5000)");
+                continue;
+            }
 
-            double denom = levelUpsDone; // (현재레벨 - 1)
-            double atkG = (curAtk - baseAtk) / denom;
-            double defG = (curDef - baseDef) / denom;
-            double spdG = (curSpd - baseSpd) / denom;
-            double hpG  = (curHp  - baseHp)  / denom;
-            double totalG = atkG + defG + spdG;
+            for (int j = 0; j < burst; j++)
+            {
+                int dAtk = DiscreteMeanSampler.SampleFromMean(rng, atkAllowed, derived.AtkMean);
+                int dDef = DiscreteMeanSampler.SampleFromMean(rng, defAllowed, derived.DefMean);
+                int dSpd = DiscreteMeanSampler.SampleFromMean(rng, spdAllowed, derived.SpdMean);
+                int dHp  = DiscreteMeanSampler.SampleFromMean(rng, hpAllowed,  derived.HpMean);
 
-            Console.WriteLine(
-                $"{currentLevel}\t\t{curAtk}\t{curDef}\t{curSpd}\t{curHp}\t" +
-                $"{atkG:0.00}\t{defG:0.00}\t{spdG:0.00}\t{totalG:0.00}\t{hpG:0.00}\t" +
-                $"(공{dAtk},방{dDef},순{dSpd},체{dHp})"
-            );
+                curAtk += dAtk;
+                curDef += dDef;
+                curSpd += dSpd;
+                curHp  += dHp;
+
+                levelUpsDone++;
+                int currentLevel = 1 + levelUpsDone;
+
+                double denom = levelUpsDone; // (현재레벨 - 1)
+                double atkG = (curAtk - baseAtk) / denom;
+                double defG = (curDef - baseDef) / denom;
+                double spdG = (curSpd - baseSpd) / denom;
+                double hpG  = (curHp  - baseHp)  / denom;
+                double totalG = atkG + defG + spdG;
+
+                Console.WriteLine(
+                    $"{currentLevel}\t\t{curAtk}\t{curDef}\t{curSpd}\t{curHp}\t" +
+                    $"{atkG:0.00}\t{defG:0.00}\t{spdG:0.00}\t{totalG:0.00}\t{hpG:0.00}\t" +
+                    $"(공{dAtk},방{dDef},순{dSpd},체{dHp})"
+                );
+            }
         }
     }
 

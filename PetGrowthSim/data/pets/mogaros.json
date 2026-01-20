@@ -61,7 +61,7 @@
     },
 
     "rounding": {
-      "atk_def_spd_display": "ROUND_HALF_UP",
+      "atk_def_spd_display": "FLOOR",
       "hp_display": "INTEGER"
     },
 
@@ -96,7 +96,7 @@
     "mapping": {
       "qualitySource": "sumAdj(atkAdj+defAdj+spdAdj)",
       "sumAdjForMax": 1.8,
-      "qClamp": { "min": 0.0, "max": 1.0 },
+      "qClamp": { "min": -0.5, "max": 1.0 },
 
       "interpolation": {
         "growthRate": "lerp(normal.growthRate, max.growthRate, q)",
@@ -123,6 +123,12 @@
         "hpAdjK": 0.12,
         "apply": "hpMean = base + hpAdj * hpAdjK",
         "clamp": { "min": 8.0, "max": 10.05 }
+      },
+
+      "negativePenalty": {
+        "enabled": true,
+        "atkDefSpdPenaltyK": 0.15,
+        "hpPenaltyK": 0.01
       }
     }
   },

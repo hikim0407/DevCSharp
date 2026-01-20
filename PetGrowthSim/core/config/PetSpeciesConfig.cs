@@ -167,6 +167,8 @@ public sealed class PetSpeciesConfig
 
         [JsonPropertyName("hpMean")]
         public HpMeanConfig HpMean { get; init; } = new();
+
+        [JsonPropertyName("negativePenalty")] public NegativePenaltyConfig? NegativePenalty { get; init; }
     }
 
     public sealed class QClampConfig
@@ -231,4 +233,12 @@ public sealed class PetSpeciesConfig
         [JsonPropertyName("min")] public int Min { get; init; }
         [JsonPropertyName("max")] public int Max { get; init; }
     }
+
+    public sealed class NegativePenaltyConfig
+    {
+        [JsonPropertyName("enabled")] public bool Enabled { get; init; } = false;
+        [JsonPropertyName("atkDefSpdPenaltyK")] public double AtkDefSpdPenaltyK { get; init; } = 0.0;
+        [JsonPropertyName("hpPenaltyK")] public double HpPenaltyK { get; init; } = 0.0;
+    }
+
 }
